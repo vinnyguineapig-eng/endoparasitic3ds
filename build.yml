@@ -11,7 +11,10 @@ jobs:
       - name: Install 3DS libraries
         run: |
           apt-get update && apt-get install -y unzip || true
-          dkp-pacman -Syu --noconfirm 3ds-dev || dkp-pacman -S --noconfirm 3ds-dev
+          for i in 1 2 3 4 5 6; do
+            dkp-pacman -Sy --noconfirm --needed --ignore 3ds-examples --disable-download-timeout 3ds-dev && break
+            echo "retry $i"; sleep 15
+          done
       - name: Build
         run: |
           mkdir work && unzip -q project.zip -d work
