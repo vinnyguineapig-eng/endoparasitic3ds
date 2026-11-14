@@ -1,0 +1,26 @@
+.SUFFIXES:
+TARGET   := endoparasitic3ds
+BUILD    := build
+SOURCES  := source
+ROMFS    := romfs
+ICON     := $(DEVKITPRO)/libctru/default_icon.png
+include $(DEVKITARM)/3ds_rules
+ARCH     := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
+CFLAGS   := -g -Wall -O2 -mword-relocations -ffunction-sections -fno-math-errno $(ARCH) -D__3DS__ -std=gnu11 -Wno-misleading-indentation -Isource -I$(CTRULIB)/include -I$(PORTLIBS)/include
+LDFLAGS  := -specs=3dsx.specs -g $(ARCH) -L$(CTRULIB)/lib -L$(PORTLIBS)/lib
+LIBS     := -lcitro2d -lcitro3d -lctru -lm
+CFILES   := $(wildcard $(SOURCES)/*.c)
+OFILES   := $(patsubst $(SOURCES)/%.c,$(BUILD)/%.o,$(CFILES))
+.PHONY: all clean
+all: $(TARGET).3dsx
+$(BUILD)/%.o: $(SOURCES)/%.c
+	@mkdir -p $(BUILD)
+	$(CC) $(CFLAGS) -c $< -o $@
+$(TARGET).elf: $(OFILES)
+	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
+$(TARGET).smdh:
+	smdhtool --create "Endoparasitic 3DS" "Fan port of Endoparasitic" "fan port" $(ICON) $@
+$(TARGET).3dsx: $(TARGET).elf $(TARGET).smdh
+	3dsxtool $(TARGET).elf $@ --smdh=$(TARGET).smdh --romfs=$(ROMFS)
+clean:
+	rm -rf $(BUILD) $(TARGET).elf $(TARGET).3dsx $(TARGET).smdh
